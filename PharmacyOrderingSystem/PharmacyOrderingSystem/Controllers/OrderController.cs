@@ -1,0 +1,60 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PharmacyOrderingSystem.DTOs;
+using PharmacyOrderingSystem.Services;
+
+namespace PharmacyOrderingSystem.Controllers
+{
+    [ApiController]
+    [Route("api/orders")]
+    [Authorize]
+    public class OrderController : ControllerBase
+    {
+        private readonly OrderService _service;
+
+        public OrderController(OrderService service)
+        {
+            _service = service;
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> Create(OrderDto dto)
+        {
+            try
+            {
+                var result = await _service.CreateOrder(dto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
+
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
+        {
+            try
+            {
+                var updatedOrder = await _service.UpdateOrderStatus(id, dto.Status);
+                return Ok(updatedOrder);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
+        {
+            var orders = await _service.GetAll();
+            return Ok(orders);
+        }
+    }
+}

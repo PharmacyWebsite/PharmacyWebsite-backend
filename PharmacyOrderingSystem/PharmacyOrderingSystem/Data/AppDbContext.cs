@@ -1,5 +1,3 @@
-
-
 using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Models;
 
@@ -10,7 +8,7 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options) { }
 
-    public DbSet<User> Users { get; set; }
+       public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Medicine> Medicines { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
@@ -30,5 +28,11 @@ public class AppDbContext : DbContext
 
             base.OnModelCreating(modelBuilder);
         }
-    }
 
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Prescription> Prescriptions { get; set; }
+    public DbSet<LoyaltyPoints> LoyaltyPoints { get; set; }
+    public DbSet<HealthPackage> HealthPackages { get; set; }
+
+}
