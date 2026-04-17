@@ -26,12 +26,17 @@ namespace PharmacyOrderingSystem
             builder.Services.AddScoped<MedicineService>();
             builder.Services.AddScoped<InventoryService>();
 
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<JwtHelper>();
+            builder.Services.AddScoped<PasswordHasher>();
+
+         
             var jwtKey = builder.Configuration["JwtSettings:SecretKey"];
             var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
             var jwtAudience = builder.Configuration["JwtSettings:Audience"];
 
             if (string.IsNullOrEmpty(jwtKey))
-                throw new Exception("JWT Key missing in appsettings.json");
+                throw new Exception("JWT SecretKey missing in appsettings.json");
 
             var key = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -51,12 +56,10 @@ namespace PharmacyOrderingSystem
                 });
 
             builder.Services.AddAuthorization();
-            
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<AuthService>();
-            builder.Services.AddScoped<JwtHelper>();
-            builder.Services.AddScoped<PasswordHasher>();
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular",
