@@ -1,0 +1,90 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PharmacyOrderingSystem.DTOs;
+using PharmacyOrderingSystem.Services;
+using System.Security.Claims;
+
+namespace PharmacyOrderingSystem.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class UserController : ControllerBase
+    {
+        private readonly UserService _userService;
+
+        public UserController(UserService userService)
+        {
+            _userService = userService;
+        }
+
+        // 🔹 Get logged-in user ID
+        private int GetUserId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        }
+
+       
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userService.GetAllUsersAsync();
+            return Ok(users);
+        }
+
+       
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = GetUserId();
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(user);
+        }
+
+        
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(user);
+        }
+
+        
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto)
+        {
+            var userId = GetUserId();
+
+            var result = await _userService.UpdateUserAsync(userId, dto);
+
+            if (!result)
+                return NotFound("User not found");
+
+            return Ok("Profile updated successfully");
+        }
+
+        // 🔥 5️⃣ ADMIN → Delete user
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var result = await _userService.DeleteUserAsync(id);
+
+            if (!result)
+                return NotFound("User not found");
+
+            return Ok("User deleted successfully");
+        }
+    }
+}
