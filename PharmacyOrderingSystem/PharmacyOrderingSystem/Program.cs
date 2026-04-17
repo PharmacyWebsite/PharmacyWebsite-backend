@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Helpers;
 using PharmacyOrderingSystem.Services;
@@ -22,15 +23,25 @@ namespace PharmacyOrderingSystem
                     ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
                 ));
 
+            // Services
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<CategoryService>();
             builder.Services.AddScoped<MedicineService>();
             builder.Services.AddScoped<InventoryService>();
+            builder.Services.AddScoped<PrescriptionService>();
+            builder.Services.AddScoped<OrderService>();
+            builder.Services.AddScoped<LoyaltyService>();
+            builder.Services.AddScoped<HealthPackageService>();
 
-            builder.Services.AddScoped<AuthService>();
+            // Helpers
             builder.Services.AddScoped<JwtHelper>();
             builder.Services.AddScoped<PasswordHasher>();
+            builder.Services.AddScoped<FileUploadHelper>();
+            builder.Services.AddScoped<EmailService>();
 
-         
+
+
             var jwtKey = builder.Configuration["JwtSettings:SecretKey"];
             var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
             var jwtAudience = builder.Configuration["JwtSettings:Audience"];
@@ -58,7 +69,32 @@ namespace PharmacyOrderingSystem
             builder.Services.AddAuthorization();
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Enter 'Bearer' [space] and then your token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
 
             builder.Services.AddCors(options =>
             {
