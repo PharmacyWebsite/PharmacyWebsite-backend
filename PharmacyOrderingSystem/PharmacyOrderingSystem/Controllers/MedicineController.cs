@@ -1,0 +1,57 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using PharmacyOrderingSystem.Models;
+using PharmacyOrderingSystem.Services;
+
+namespace PharmacyOrderingSystem.Controllers
+{
+    [ApiController]
+    [Route("api/medicine")]
+    public class MedicineController : ControllerBase
+    {
+        private readonly MedicineService _service;
+
+        public MedicineController(MedicineService service)
+        {
+            _service = service;
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _service.GetAll());
+        }
+
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await _service.GetById(id));
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> Create(Medicine medicine, [FromQuery] int stock)
+        {
+            return Ok(await _service.Create(medicine, stock));
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Medicine medicine)
+        {
+            medicine.Id = id;
+            await _service.Update(medicine);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _service.Delete(id);
+            return Ok();
+        }
+    }
+}

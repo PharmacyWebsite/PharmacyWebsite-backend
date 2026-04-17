@@ -1,4 +1,5 @@
 
+
 using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Models;
 
@@ -10,4 +11,24 @@ public class AppDbContext : DbContext
         : base(options) { }
 
     public DbSet<User> Users { get; set; }
-}
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Medicine> Medicines { get; set; }
+        public DbSet<Inventory> Inventories { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Medicine>()
+                .HasOne(m => m.Category)
+                .WithMany(c => c.Medicines)
+                .HasForeignKey(m => m.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Inventory>()
+                .HasOne(i => i.Medicine)
+                .WithOne(m => m.Inventory)
+                .HasForeignKey<Inventory>(i => i.MedicineId);
+
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+
