@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PharmacyOrderingSystem.Configurations;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Helpers;
 using PharmacyOrderingSystem.Services;
@@ -15,7 +16,11 @@ namespace PharmacyOrderingSystem
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseMySql(
@@ -40,7 +45,8 @@ namespace PharmacyOrderingSystem
             builder.Services.AddScoped<FileUploadHelper>();
             builder.Services.AddScoped<EmailService>();
 
-
+            builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("JwtSettings"));
 
             var jwtKey = builder.Configuration["JwtSettings:SecretKey"];
             var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
