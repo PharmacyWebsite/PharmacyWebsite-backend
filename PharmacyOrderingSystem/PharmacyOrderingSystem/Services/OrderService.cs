@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.DTOs;
 using PharmacyOrderingSystem.Enums;
-using PharmacyOrderingSystem.Helpers;
 using PharmacyOrderingSystem.Models;
+using PharmacyOrderingSystem.Helpers;
 
 namespace PharmacyOrderingSystem.Services
 {
@@ -24,28 +24,64 @@ namespace PharmacyOrderingSystem.Services
             {
                 Console.WriteLine("[ORDER] Creating order...");
 
+                var user = await _context.Users.FindAsync(dto.UserId);
+                if (user == null)
+                    throw new Exception("User not found");
+
                 var order = new Order
                 {
                     UserId = dto.UserId,
-                    Items = dto.Items.Select(i => new OrderItem
-                    {
-                        MedicineId = i.MedicineId,
-                        Quantity = i.Quantity
-                    }).ToList(),
+                    Status = OrderStatus.Placed,
                     TotalAmount = 0,
-                    Status = OrderStatus.Placed
+                    Items = new List<OrderItem>()
                 };
+
+                foreach (var item in dto.Items)
+                {
+                    var medicine = await _context.Medicines.FindAsync(item.MedicineId);
+                    if (medicine == null)
+                        throw new Exception($"Medicine not found: {item.MedicineId}");
+
+                    var inventory = await _context.Inventories
+                        .FirstOrDefaultAsync(i => i.MedicineId == item.MedicineId);
+
+                    if (inventory == null)
+                        throw new Exception("Inventory not found");
+
+                    if (inventory.Stock < item.Quantity)
+                        throw new Exception("Not enough stock");
+
+                    inventory.Stock -= item.Quantity;
+
+                    order.Items.Add(new OrderItem
+                    {
+                        MedicineId = item.MedicineId,
+                        Quantity = item.Quantity,
+                        
+                    });
+
+                    order.TotalAmount += medicine.Price * item.Quantity;
+                }
 
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
 
                 Console.WriteLine("[ORDER] Order created successfully");
 
-                await _emailService.SendEmailAsync(
-                    "user@mail.com",
-                    "Order Confirmed",
-                    $"Your order #{order.Id} has been placed successfully."
-                );
+                
+                try
+                {
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        "Order Confirmed",
+                        $"Your order #{order.Id} has been placed successfully."
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[EMAIL ERROR] " + ex.Message);
+                   
+                }
 
                 return order;
             }
@@ -58,34 +94,25 @@ namespace PharmacyOrderingSystem.Services
 
         public async Task<Order> UpdateOrderStatus(int orderId, OrderStatus status)
         {
-            try
-            {
-                var order = await _context.Orders
-                    .Include(o => o.Items)
-                    .FirstOrDefaultAsync(o => o.Id == orderId);
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
 
-                if (order == null)
-                {
-                    throw new Exception("Order not found");
-                }
+            if (order == null)
+                throw new Exception("Order not found");
 
-                order.Status = status;
+            order.Status = status;
 
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-                Console.WriteLine($"[ORDER] Status updated to {status} for Order ID {orderId}");
-
-                return order;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ORDER STATUS ERROR] {ex.Message}");
-                throw;
-            }
+            return order;
         }
+
         public async Task<List<Order>> GetAll()
         {
-            return await _context.Orders.Include(o => o.Items).ToListAsync();
+            return await _context.Orders
+                .Include(o => o.Items)
+                .ToListAsync();
         }
     }
 }
