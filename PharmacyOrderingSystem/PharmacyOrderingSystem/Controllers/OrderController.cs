@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmacyOrderingSystem.DTOs;
@@ -23,7 +24,16 @@ namespace PharmacyOrderingSystem.Controllers
         {
             try
             {
-                var result = await _service.CreateOrder(dto);
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized("User not found in token");
+
+                if (!int.TryParse(userIdClaim, out var userId))
+                    return Unauthorized("Invalid user id in token");
+
+                var result = await _service.CreateOrder(dto, userId);
+
                 return Ok(result);
             }
             catch (Exception ex)
@@ -32,6 +42,8 @@ namespace PharmacyOrderingSystem.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
+        
 
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin")]

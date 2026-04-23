@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.37012.4 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11709.129 insiders
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PharmacyOrderingSystem", "PharmacyOrderingSystem.csproj", "{1827D069-771E-EDB2-A40D-6811A898E56E}"
 EndProject
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C9406D61-C343-4AD1-889F-008613823557}
+		SolutionGuid = {4D63121C-ED21-4B70-B717-61532EA3D8D8}
 	EndGlobalSection
 EndGlobal

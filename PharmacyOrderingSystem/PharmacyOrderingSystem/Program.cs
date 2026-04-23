@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -5,8 +6,8 @@ using Microsoft.OpenApi.Models;
 using PharmacyOrderingSystem.Configurations;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Helpers;
+using PharmacyOrderingSystem.Middleware;
 using PharmacyOrderingSystem.Services;
-using System.Text;
 
 namespace PharmacyOrderingSystem
 {
@@ -111,13 +112,26 @@ namespace PharmacyOrderingSystem
                         .AllowAnyMethod());
             });
 
+            
+
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+                SeedData.Initialize(db);
+            }
 
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            app.UseMiddleware<RateLimitingMiddleware>();
 
             app.UseHttpsRedirection();
 

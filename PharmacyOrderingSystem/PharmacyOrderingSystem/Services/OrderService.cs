@@ -18,26 +18,32 @@ namespace PharmacyOrderingSystem.Services
             _emailService = emailService;
         }
 
-        public async Task<Order> CreateOrder(OrderDto dto)
+        public async Task<Order> CreateOrder(OrderDto dto, int userId)
         {
+
             try
             {
                 Console.WriteLine("[ORDER] Creating order...");
 
-                var user = await _context.Users.FindAsync(dto.UserId);
+                var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                     throw new Exception("User not found");
 
                 var order = new Order
                 {
-                    UserId = dto.UserId,
+                    UserId = userId,
                     Status = OrderStatus.Placed,
                     TotalAmount = 0,
                     Items = new List<OrderItem>()
                 };
 
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
                 foreach (var item in dto.Items)
                 {
+                    if (item.Quantity <= 0)
+                        throw new Exception("Invalid quantity");
+
                     var medicine = await _context.Medicines.FindAsync(item.MedicineId);
                     if (medicine == null)
                         throw new Exception($"Medicine not found: {item.MedicineId}");
@@ -57,18 +63,38 @@ namespace PharmacyOrderingSystem.Services
                     {
                         MedicineId = item.MedicineId,
                         Quantity = item.Quantity,
-                        
                     });
 
                     order.TotalAmount += medicine.Price * item.Quantity;
                 }
 
                 _context.Orders.Add(order);
+
+                // loyalty BEFORE save
+                var loyalty = await _context.LoyaltyPoints
+                    .FirstOrDefaultAsync(x => x.UserId == userId);
+
+                if (loyalty != null)
+                {
+                    loyalty.Points += 10;
+                }
+                else
+                {
+                    loyalty = new LoyaltyPoints
+                    {
+                        UserId = userId,
+                        Points = 10
+                    };
+                    _context.LoyaltyPoints.Add(loyalty);
+                }
+
+                // single save
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine("[ORDER] Order created successfully");
+                // commit transaction
+                await transaction.CommitAsync();
 
-                
+
                 try
                 {
                     await _emailService.SendEmailAsync(

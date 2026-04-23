@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Models;
-
+using PharmacyOrderingSystem.DTOs;
 namespace PharmacyOrderingSystem.Services
 {
     public class LoyaltyService

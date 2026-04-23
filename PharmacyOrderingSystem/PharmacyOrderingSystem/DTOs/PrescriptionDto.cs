@@ -1,5 +1,7 @@
-namespace PharmacyOrderingSystem.Models
+
+namespace PharmacyOrderingSystem.DTOs
 {
+
     public class PrescriptionDto
     {
         public int UserId { get; set; }

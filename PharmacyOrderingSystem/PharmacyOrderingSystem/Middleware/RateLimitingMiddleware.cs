@@ -19,7 +19,7 @@ public class RateLimitingMiddleware
         {
             var (count, time) = _requests[ip];
 
-            if ((DateTime.UtcNow - time).Seconds < 60)
+            if ((DateTime.UtcNow - time).TotalSeconds < 60)
             {
                 if (count > 10)
                 {

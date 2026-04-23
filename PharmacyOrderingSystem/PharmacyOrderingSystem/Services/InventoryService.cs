@@ -34,14 +34,31 @@ namespace PharmacyOrderingSystem.Services
 
         public async Task ReduceStock(int medicineId, int quantity)
         {
+            if (quantity <= 0)
+                throw new Exception("Quantity must be greater than zero");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             var inventory = await _context.Inventories
                 .FirstOrDefaultAsync(i => i.MedicineId == medicineId);
 
-            if (inventory != null)
-            {
-                inventory.Stock -= quantity;
-                await _context.SaveChangesAsync();
-            }
+            if (inventory == null)
+                throw new Exception("Inventory not found");
+
+            if (inventory.Stock < quantity)
+                throw new Exception("Insufficient stock");
+
+            inventory.Stock -= quantity;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+
+        public async Task<List<Inventory>> GetAllInventory()
+        {
+            return await _context.Inventories
+                .Include(i => i.Medicine)
+                .ToListAsync();
         }
     }
 }

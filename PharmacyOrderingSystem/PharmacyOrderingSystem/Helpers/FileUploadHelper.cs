@@ -6,7 +6,16 @@ namespace PharmacyOrderingSystem.Helpers
         {
             try
             {
-                var path = Path.Combine("Uploads", file.FileName);
+                var folderPath = "Uploads";
+
+                //CREATE FOLDER if not exists
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                var path = Path.Combine(folderPath, fileName);
 
                 using (var stream = new FileStream(path, FileMode.Create))
                 {

@@ -19,7 +19,15 @@ public class ExceptionMiddleware
         catch (Exception ex)
         {
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsync(ex.Message);
+            context.Response.ContentType = "application/json";
+
+            var response = new
+            {
+                success = false,
+                message = ex.Message
+            };
+
+            await context.Response.WriteAsJsonAsync(response);
         }
     }
 }

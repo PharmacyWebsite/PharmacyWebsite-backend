@@ -1,5 +1,6 @@
-namespace PharmacyOrderingSystem.Models
+namespace PharmacyOrderingSystem.DTOs
 {
+
     public class HealthPackageDto
     {
         public string Name { get; set; }

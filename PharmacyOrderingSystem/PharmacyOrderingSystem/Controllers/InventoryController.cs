@@ -29,5 +29,13 @@ namespace PharmacyOrderingSystem.Controllers
             await _service.UpdateStock(medicineId, quantity);
             return Ok();
         }
+
+        [Authorize]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllInventory()
+        {
+            var data = await _service.GetAllInventory();
+            return Ok(data);
+        }
     }
 }
