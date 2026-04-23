@@ -60,18 +60,18 @@ namespace PharmacyOrderingSystem.Controllers
             return Ok(user);
         }
 
-        
+
         [HttpPut("update")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto)
         {
             var userId = GetUserId();
-
             var result = await _userService.UpdateUserAsync(userId, dto);
 
             if (!result)
-                return NotFound("User not found");
+                return NotFound(new { success = false, message = "User not found" });
 
-            return Ok("Profile updated successfully");
+            //Return JSON instead of plain string
+            return Ok(new { success = true, message = "Profile updated successfully" });
         }
 
         // 🔥 5️⃣ ADMIN → Delete user
