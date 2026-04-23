@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Models;
-using System;
+using PharmacyOrderingSystem.DTOs;
 
 namespace PharmacyOrderingSystem.Services
 {
@@ -14,49 +14,119 @@ namespace PharmacyOrderingSystem.Services
             _context = context;
         }
 
-        public async Task<List<Medicine>> GetAll()
+        // ✅ GET ALL MEDICINES WITH CORRECT STOCK
+        public async Task<List<MedicineDto>> GetAll()
         {
-            return await _context.Medicines
-                .Include(m => m.Inventory)
-                .Include(m => m.Category)
-                .ToListAsync();
+            var medicines = await _context.Medicines.ToListAsync();
+            var inventories = await _context.Inventories.ToListAsync();
+
+            return medicines.Select(m => new MedicineDto
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Dosage = m.Dosage,
+                Price = m.Price,
+                CategoryId = m.CategoryId,
+                Stock = inventories.FirstOrDefault(i => i.MedicineId == m.Id)?.Stock ?? 0
+            }).ToList();
         }
 
-        public async Task<Medicine?> GetById(int id)
+        // ✅ GET BY ID
+        public async Task<MedicineDto?> GetById(int id)
         {
-            return await _context.Medicines
-                .Include(m => m.Inventory)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var medicine = await _context.Medicines.FindAsync(id);
+            if (medicine == null) return null;
+
+            var inventory = await _context.Inventories
+                .FirstOrDefaultAsync(i => i.MedicineId == id);
+
+            return new MedicineDto
+            {
+                Id = medicine.Id,
+                Name = medicine.Name,
+                Dosage = medicine.Dosage,
+                Price = medicine.Price,
+                CategoryId = medicine.CategoryId,
+                Stock = inventory?.Stock ?? 0
+            };
         }
 
-        public async Task<Medicine> Create(Medicine medicine, int stock)
+        // ✅ CREATE MEDICINE + INVENTORY
+        public async Task<MedicineDto> Create(MedicineDto dto)
         {
+            var medicine = new Medicine
+            {
+                Name = dto.Name,
+                Dosage = dto.Dosage,
+                Price = dto.Price,
+                CategoryId = dto.CategoryId
+            };
+
             _context.Medicines.Add(medicine);
             await _context.SaveChangesAsync();
 
             var inventory = new Inventory
             {
                 MedicineId = medicine.Id,
-                Stock = stock
+                Stock = dto.Stock
             };
 
             _context.Inventories.Add(inventory);
             await _context.SaveChangesAsync();
 
-            return medicine;
+            dto.Id = medicine.Id;
+            return dto;
         }
 
-        public async Task Update(Medicine medicine)
+        // ✅ UPDATE MEDICINE + HANDLE INVENTORY PROPERLY
+        public async Task Update(MedicineDto dto)
         {
-            _context.Medicines.Update(medicine);
-            await _context.SaveChangesAsync();
+            var medicine = await _context.Medicines.FindAsync(dto.Id);
+
+            if (medicine != null)
+            {
+                medicine.Name = dto.Name;
+                medicine.Dosage = dto.Dosage;
+                medicine.Price = dto.Price;
+                medicine.CategoryId = dto.CategoryId;
+
+                // 🔥 FIX: HANDLE INVENTORY EVEN IF MISSING
+                var inventory = await _context.Inventories
+                    .FirstOrDefaultAsync(i => i.MedicineId == dto.Id);
+
+                if (inventory == null)
+                {
+                    inventory = new Inventory
+                    {
+                        MedicineId = dto.Id,
+                        Stock = dto.Stock
+                    };
+                    _context.Inventories.Add(inventory);
+                }
+                else
+                {
+                    inventory.Stock = dto.Stock;
+                }
+
+                await _context.SaveChangesAsync();
+            }
         }
 
+        // ✅ DELETE (optional: also remove inventory)
         public async Task Delete(int id)
         {
             var medicine = await _context.Medicines.FindAsync(id);
+
             if (medicine != null)
             {
+                var inventory = await _context.Inventories
+                    .FirstOrDefaultAsync(i => i.MedicineId == id);
+
+                if (inventory != null)
+                {
+                    _context.Inventories.Remove(inventory);
+                }
+
                 _context.Medicines.Remove(medicine);
                 await _context.SaveChangesAsync();
             }

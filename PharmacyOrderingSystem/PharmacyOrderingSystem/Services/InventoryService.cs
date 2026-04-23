@@ -25,11 +25,22 @@ namespace PharmacyOrderingSystem.Services
             var inventory = await _context.Inventories
                 .FirstOrDefaultAsync(i => i.MedicineId == medicineId);
 
-            if (inventory != null)
+            if (inventory == null)
+            {
+                inventory = new Inventory
+                {
+                    MedicineId = medicineId,
+                    Stock = quantity
+                };
+
+                _context.Inventories.Add(inventory);
+            }
+            else
             {
                 inventory.Stock = quantity;
-                await _context.SaveChangesAsync();
             }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task ReduceStock(int medicineId, int quantity)

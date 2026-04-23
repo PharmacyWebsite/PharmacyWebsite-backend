@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmacyOrderingSystem.Data;
 using PharmacyOrderingSystem.Models;
-using System;
+using PharmacyOrderingSystem.DTOs;
 
 namespace PharmacyOrderingSystem.Services
 {
@@ -14,27 +14,53 @@ namespace PharmacyOrderingSystem.Services
             _context = context;
         }
 
-        public async Task<List<Category>> GetAll()
+        public async Task<List<CategoryDto>> GetAll()
         {
-            return await _context.Categories.ToListAsync();
+            var categories = await _context.Categories.ToListAsync();
+
+            return categories.Select(c => new CategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name
+            }).ToList();
         }
 
-        public async Task<Category?> GetById(int id)
+        public async Task<CategoryDto?> GetById(int id)
         {
-            return await _context.Categories.FindAsync(id);
+            var category = await _context.Categories.FindAsync(id);
+
+            if (category == null) return null;
+
+            return new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
         }
 
-        public async Task<Category> Create(Category category)
+        public async Task<CategoryDto> Create(CategoryDto dto)
         {
+            var category = new Category
+            {
+                Name = dto.Name
+            };
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
-            return category;
+
+            dto.Id = category.Id;
+            return dto;
         }
 
-        public async Task Update(Category category)
+        public async Task Update(CategoryDto dto)
         {
-            _context.Categories.Update(category);
-            await _context.SaveChangesAsync();
+            var category = await _context.Categories.FindAsync(dto.Id);
+
+            if (category != null)
+            {
+                category.Name = dto.Name;
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task Delete(int id)
