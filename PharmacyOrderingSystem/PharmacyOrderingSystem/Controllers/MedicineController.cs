@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using PharmacyOrderingSystem.Models;
+using PharmacyOrderingSystem.DTOs;
 using PharmacyOrderingSystem.Services;
 
 namespace PharmacyOrderingSystem.Controllers
@@ -32,17 +32,17 @@ namespace PharmacyOrderingSystem.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> Create(Medicine medicine, [FromQuery] int stock)
+        public async Task<IActionResult> Create(MedicineDto dto)
         {
-            return Ok(await _service.Create(medicine, stock));
+            return Ok(await _service.Create(dto));
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Medicine medicine)
+        public async Task<IActionResult> Update(int id, MedicineDto dto)
         {
-            medicine.Id = id;
-            await _service.Update(medicine);
+            dto.Id = id;
+            await _service.Update(dto);
             return Ok();
         }
 

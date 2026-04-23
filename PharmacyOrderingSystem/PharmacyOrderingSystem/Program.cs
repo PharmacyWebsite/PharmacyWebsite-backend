@@ -106,13 +106,15 @@ namespace PharmacyOrderingSystem
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular",
-                    policy => policy
-                        .WithOrigins("http://localhost:4200")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+                    policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
             });
 
-            
+
 
             var app = builder.Build();
 
@@ -128,6 +130,7 @@ namespace PharmacyOrderingSystem
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCors("AllowAngular");
 
             app.UseMiddleware<ExceptionMiddleware>();
 
@@ -135,7 +138,6 @@ namespace PharmacyOrderingSystem
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowAngular");
 
             app.UseAuthentication();
             app.UseAuthorization();
